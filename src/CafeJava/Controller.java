@@ -58,6 +58,7 @@ class Controller {
             + "-" + LocalTime.now().format(DateTimeFormatter.ofPattern("HHmmss"))
             + "-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
         String today = LocalDate.now().toString();
+
         double actualPay = method.equals("cash") ? payAmount : total;
         double change = method.equals("cash") ? payAmount - total : 0;
 

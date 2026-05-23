@@ -7,39 +7,33 @@ import java.awt.event.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 class MainFrame extends JFrame {
 
     private final Controller ctrl = new Controller();
-    private final Color BG       = new Color(0xf8fafc);
-    private final Color AMBER    = new Color(0xd97706);
-    private final Color SLATE100 = new Color(0xf1f5f9);
-    private final Color SLATE200 = new Color(0xe2e8f0);
-    private final Color SLATE600 = new Color(0x475569);
-    private final Color AMBER700 = new Color(0xb45309);
-    private final Color BLUE700  = new Color(0x1e40af);
-    private final Color GREEN700 = new Color(0x166534);
-    private final Color RED500   = new Color(0xef4444);
-    private final Color AMBER50  = new Color(0xfffbeb);
-    private final Color BLUE50   = new Color(0xeff6ff);
-    private final Color GREEN50  = new Color(0xf0fdf4);
-    private final Color PURPLE50 = new Color(0xfaf5ff);
-    private final Color RED50    = new Color(0xfef2f2);
-    private final Color SEL_BG   = new Color(0xfef3c7);
+    private final Color LATAR = new Color(0xf1f5f9);
+    private final Color ORANYE = new Color(0xea580c);
+    private final Color ABU_MUDA = new Color(0xe2e8f0);
+    private final Color ABU_GARIS = new Color(0xcbd5e1);
+    private final Color ABU_TEKS = new Color(0x334155);
+    private final Color ORANYE_TUA = new Color(0xc2410c);
+    private final Color BIRU = new Color(0x1d4ed8);
+    private final Color HIJAU = new Color(0x15803d);
+    private final Color MERAH = new Color(0xb91c1c);
+    private final Color UNGU = new Color(0x7e22ce);
+    private final Color KUNING = new Color(0xfef08a);
 
-    // Dashboard
     private JLabel dbMenu, dbTrans, dbRev, dbStock, dbDate;
     private JTextArea dbRecent;
 
-    // Menu
     private DefaultTableModel menuModel;
     private JTable menuTable;
     private JTextField menuSearch, menuName, menuPrice, menuStock;
     private JComboBox<String> menuCat;
     private int editingId = -1;
 
-    // Kasir
     private JPanel menuGridPanel;
     private JTextField cashSearch;
     private JComboBox<String> cashFilter;
@@ -50,7 +44,6 @@ class MainFrame extends JFrame {
     private JComboBox<String> cashMethod;
     private final List<Controller.CartEntry> cart = new ArrayList<>();
 
-    // Laporan
     private JComboBox<String> rptDate;
     private JLabel rptTrans, rptRev, rptAvg;
     private DefaultTableModel rptModel;
@@ -59,13 +52,29 @@ class MainFrame extends JFrame {
     public MainFrame() {
         super("Cafe Java");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1150, 700);
-        setMinimumSize(new Dimension(920, 580));
+        setSize(1240, 820);
+        setMinimumSize(new Dimension(1100, 750));
         setLocationRelativeTo(null);
 
-        JTabbedPane tabs = new JTabbedPane(JTabbedPane.LEFT);
-        tabs.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        tabs.setBackground(SLATE100);
+        UIManager.put("TabbedPane.selected", Color.WHITE);
+        UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
+        UIManager.put("TabbedPane.tabInsets", new Insets(18, 24, 18, 24));
+        UIManager.put("TabbedPane.unselectedTabBackground", LATAR);
+        UIManager.put("TabbedPane.shadow", ABU_GARIS);
+        UIManager.put("TabbedPane.darkShadow", ABU_GARIS);
+        UIManager.put("TabbedPane.highlight", ABU_MUDA);
+        UIManager.put("TabbedPane.lightHighlight", ABU_MUDA);
+
+        JTabbedPane tabs = new JTabbedPane(JTabbedPane.LEFT) {
+            @Override
+            public void updateUI() {
+                super.updateUI();
+                setBorder(BorderFactory.createMatteBorder(0, 0, 0, 2, ABU_GARIS));
+            }
+        };
+        tabs.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        tabs.setBackground(LATAR);
+        tabs.setForeground(ABU_TEKS);
 
         tabs.addTab("Dashboard",   buildDashboard());
         tabs.addTab("Kelola Menu", buildMenuPanel());
@@ -83,54 +92,86 @@ class MainFrame extends JFrame {
         refreshDashboard();
     }
 
-    // Dashboard
     private JPanel buildDashboard() {
-        JPanel p = new JPanel(new BorderLayout(12, 12));
-        p.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
-        p.setBackground(BG);
+        JPanel p = new JPanel(new BorderLayout(24, 24));
+        p.setBorder(BorderFactory.createEmptyBorder(28, 32, 28, 32));
+        p.setBackground(Color.WHITE);
 
         JPanel hdr = new JPanel(new BorderLayout());
         hdr.setOpaque(false);
-        hdr.add(lbl("Dashboard", Font.BOLD, 24), BorderLayout.WEST);
-        dbDate = lbl("", Font.PLAIN, 14);
-        dbDate.setForeground(new Color(0x64748b));
+        hdr.add(lbl("Dashboard", Font.BOLD, 28), BorderLayout.WEST);
+        dbDate = lbl("", Font.PLAIN, 15);
+        dbDate.setForeground(ABU_TEKS);
         hdr.add(dbDate, BorderLayout.EAST);
         p.add(hdr, BorderLayout.NORTH);
 
-        JPanel stats = new JPanel(new GridLayout(1, 4, 12, 0));
-        stats.setOpaque(false);
-        dbMenu  = addStat(stats, "Total Menu",         BLUE50,  BLUE700);
-        dbTrans = addStat(stats, "Transaksi Hari Ini", GREEN50, GREEN700);
-        dbRev   = addStat(stats, "Pendapatan Hari Ini",AMBER50, AMBER700);
-        dbStock = addStat(stats, "Nilai Stok",         PURPLE50,new Color(0x6b21a8));
-        p.add(stats, BorderLayout.CENTER);
+        JPanel contentPanel = new JPanel(new GridBagLayout());
+        contentPanel.setOpaque(false);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1.0;
 
-        JPanel recent = new JPanel(new BorderLayout());
+        JPanel stats = new JPanel(new GridLayout(2, 2, 20, 20));
+        stats.setOpaque(false);
+        dbMenu  = addStat(stats, "Total Menu",         BIRU);
+        dbTrans = addStat(stats, "Transaksi Hari Ini", HIJAU);
+        dbRev   = addStat(stats, "Pendapatan Hari Ini",ORANYE_TUA);
+        dbStock = addStat(stats, "Nilai Stok",         UNGU);
+
+        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.weighty = 0.40;
+        gbc.insets = new Insets(0, 0, 24, 0);
+        contentPanel.add(stats, gbc);
+
+        JPanel recent = new JPanel(new BorderLayout(0, 12));
         recent.setBackground(Color.WHITE);
-        recent.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(SLATE200),
-            "Transaksi Terbaru", 0, 0, new Font("Segoe UI", Font.BOLD, 13)));
+        recent.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(ABU_GARIS, 1),
+            BorderFactory.createEmptyBorder(20, 22, 20, 22)
+        ));
+        
+        JLabel titleLabel = lbl("Transaksi Terbaru", Font.BOLD, 18);
+        titleLabel.setForeground(ABU_TEKS);
+        recent.add(titleLabel, BorderLayout.NORTH);
+        
         dbRecent = new JTextArea();
         dbRecent.setEditable(false);
-        dbRecent.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        dbRecent.setBackground(Color.WHITE);
-        recent.add(new JScrollPane(dbRecent), BorderLayout.CENTER);
-        p.add(recent, BorderLayout.SOUTH);
+        dbRecent.setFont(new Font("Consolas", Font.PLAIN, 14));
+        dbRecent.setBackground(LATAR);
+        dbRecent.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
+        
+        JScrollPane scrollRecent = new JScrollPane(dbRecent);
+        scrollRecent.setBorder(BorderFactory.createLineBorder(ABU_MUDA));
+        recent.add(scrollRecent, BorderLayout.CENTER);
+
+        gbc.gridx = 0; gbc.gridy = 1;
+        gbc.weighty = 0.60;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        contentPanel.add(recent, gbc);
+
+        p.add(contentPanel, BorderLayout.CENTER);
         return p;
     }
 
-    private JLabel addStat(JPanel parent, String title, Color bg, Color fg) {
-        JPanel card = new JPanel(new BorderLayout(4, 4));
-        card.setBackground(bg);
+    private JLabel addStat(JPanel parent, String title, Color borderFg) {
+        JPanel card = new JPanel(new BorderLayout(8, 8));
+        card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(SLATE200),
-            BorderFactory.createEmptyBorder(14, 16, 14, 16)));
+            BorderFactory.createMatteBorder(0, 6, 0, 0, borderFg),
+            BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(ABU_MUDA, 1),
+                BorderFactory.createEmptyBorder(20, 22, 20, 22)
+            )
+        ));
+        
         JLabel val = lbl("...", Font.BOLD, 24);
-        val.setForeground(fg);
+        val.setForeground(borderFg);
         card.add(val, BorderLayout.CENTER);
-        JLabel lab = lbl(title, Font.PLAIN, 12);
-        lab.setForeground(new Color(0x64748b));
+        
+        JLabel lab = lbl(title, Font.PLAIN, 14);
+        lab.setForeground(ABU_TEKS);
         card.add(lab, BorderLayout.SOUTH);
+        
         parent.add(card);
         return val;
     }
@@ -150,14 +191,14 @@ class MainFrame extends JFrame {
         dbRev.setText("Rp " + Controller.formatRupiah(ctrl.sumRevenue(today)));
         double sv = menus.stream().mapToDouble(m -> m.getPrice() * m.getStock()).sum();
         int ts = menus.stream().mapToInt(MenuItem::getStock).sum();
-        dbStock.setText("Rp " + Controller.formatRupiah(sv) + "  (" + ts + " item)");
+        dbStock.setText("Rp " + Controller.formatRupiah(sv) + " (" + ts + " item)");
 
         List<Order> orders = ctrl.getOrdersByDate(today);
         StringBuilder sb = new StringBuilder();
-        int max = Math.min(orders.size(), 8);
+        int max = Math.min(orders.size(), 10);
         for (int i = 0; i < max; i++) {
             Order o = orders.get(i);
-            sb.append(String.format("%-30s Rp %10s  [%s]\n",
+            sb.append(String.format("%-45s Rp %14s   [%s]\n",
                 o.getId(), Controller.formatRupiah(o.getTotal()),
                 o.getPaymentMethod().toUpperCase()));
         }
@@ -165,78 +206,88 @@ class MainFrame extends JFrame {
         dbRecent.setText(sb.toString());
     }
 
-    // Menu
     private JPanel buildMenuPanel() {
-        JPanel p = new JPanel(new BorderLayout(10, 10));
-        p.setBorder(BorderFactory.createEmptyBorder(20, 24, 16, 24));
-        p.setBackground(BG);
+        JPanel p = new JPanel(new BorderLayout(20, 20));
+        p.setBorder(BorderFactory.createEmptyBorder(28, 32, 28, 32));
+        p.setBackground(Color.WHITE);
 
         JPanel hdr = new JPanel(new BorderLayout());
         hdr.setOpaque(false);
-        hdr.add(lbl("Kelola Menu", Font.BOLD, 24), BorderLayout.WEST);
+        hdr.add(lbl("Kelola Menu", Font.BOLD, 28), BorderLayout.WEST);
         JButton addBtn = btnPrimary("+ Tambah Menu");
         addBtn.addActionListener(e -> { clearMenuForm(); menuName.requestFocus(); });
         hdr.add(addBtn, BorderLayout.EAST);
         p.add(hdr, BorderLayout.NORTH);
 
-        JPanel searchRow = new JPanel(new BorderLayout(8, 0));
+        JPanel mainContent = new JPanel(new BorderLayout(0, 16));
+        mainContent.setOpaque(false);
+
+        JPanel searchRow = new JPanel(new BorderLayout(12, 0));
         searchRow.setOpaque(false);
-        searchRow.add(lbl("Cari:", Font.PLAIN, 13), BorderLayout.WEST);
+        searchRow.add(lbl("Cari:", Font.BOLD, 14), BorderLayout.WEST);
         menuSearch = new JTextField();
-        menuSearch.setFont(font(13));
-        menuSearch.setBorder(insetBorder(6, 10));
+        menuSearch.setFont(font(14));
+        menuSearch.setBorder(insetBorder(10, 14));
         menuSearch.addActionListener(e -> refreshMenuTable());
         searchRow.add(menuSearch, BorderLayout.CENTER);
         JButton searchBtn = btnDefault("Cari");
         searchBtn.addActionListener(e -> refreshMenuTable());
         searchRow.add(searchBtn, BorderLayout.EAST);
-        JPanel topBar = new JPanel(new BorderLayout(0, 6));
-        topBar.setOpaque(false);
-        topBar.add(searchRow, BorderLayout.NORTH);
+        mainContent.add(searchRow, BorderLayout.NORTH);
 
         menuModel = new DefaultTableModel(
             new String[]{"ID", "Nama Menu", "Kategori", "Harga", "Stok"}, 0) {
+            @Override
             public boolean isCellEditable(int r, int c) { return false; }
         };
         menuTable = new JTable(menuModel);
-        menuTable.setRowHeight(34);
-        menuTable.setFont(font(13));
-        menuTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-        menuTable.getTableHeader().setBackground(SLATE100);
-        menuTable.setSelectionBackground(SEL_BG);
+        menuTable.setRowHeight(42);
+        menuTable.setFont(font(14));
+        menuTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        menuTable.getTableHeader().setBackground(LATAR);
+        menuTable.getTableHeader().setForeground(ABU_TEKS);
+        menuTable.getTableHeader().setPreferredSize(new Dimension(0, 44));
+        menuTable.setSelectionBackground(KUNING);
         menuTable.setSelectionForeground(Color.BLACK);
-        menuTable.setGridColor(SLATE200);
+        menuTable.setGridColor(ABU_MUDA);
+        
         JScrollPane sp = new JScrollPane(menuTable);
-        sp.setBorder(BorderFactory.createLineBorder(SLATE200));
-        sp.setPreferredSize(new Dimension(0, 260));
-        topBar.add(sp, BorderLayout.CENTER);
+        sp.setBorder(BorderFactory.createLineBorder(ABU_GARIS));
+        mainContent.add(sp, BorderLayout.CENTER);
+        p.add(mainContent, BorderLayout.CENTER);
 
-        p.add(topBar, BorderLayout.CENTER);
-
-        JPanel bottom = new JPanel(new BorderLayout(8, 8));
+        JPanel bottom = new JPanel(new BorderLayout(16, 16));
         bottom.setOpaque(false);
 
-        JPanel form = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 6));
-        form.setBackground(Color.WHITE);
+        JPanel form = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 12));
+        form.setBackground(LATAR);
         form.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(SLATE200),
+            BorderFactory.createLineBorder(ABU_GARIS),
             BorderFactory.createEmptyBorder(10, 14, 10, 14)));
-        form.add(lbl("Nama:", Font.PLAIN, 13));
-        menuName = new JTextField(14); menuName.setFont(font(13)); form.add(menuName);
-        form.add(lbl("Kategori:", Font.PLAIN, 13));
+        
+        form.add(lbl("Nama:", Font.PLAIN, 14));
+        menuName = new JTextField(16); menuName.setFont(font(14)); menuName.setBorder(insetBorder(8, 12)); form.add(menuName);
+        
+        form.add(lbl("Kategori:", Font.PLAIN, 14));
         menuCat = new JComboBox<>(new String[]{"Makanan", "Minuman"});
-        menuCat.setFont(font(13)); form.add(menuCat);
-        form.add(lbl("Harga:", Font.PLAIN, 13));
-        menuPrice = new JTextField(8); menuPrice.setFont(font(13)); form.add(menuPrice);
-        form.add(lbl("Stok:", Font.PLAIN, 13));
-        menuStock = new JTextField(5); menuStock.setFont(font(13)); form.add(menuStock);
-        form.add(btnPrimary("Simpan"));
-        ((JButton)form.getComponent(form.getComponentCount()-1)).addActionListener(e -> saveMenu());
-        form.add(btnDefault("Batal"));
-        ((JButton)form.getComponent(form.getComponentCount()-1)).addActionListener(e -> clearMenuForm());
+        menuCat.setFont(font(14)); form.add(menuCat);
+        
+        form.add(lbl("Harga:", Font.PLAIN, 14));
+        menuPrice = new JTextField(9); menuPrice.setFont(font(14)); menuPrice.setBorder(insetBorder(8, 12)); form.add(menuPrice);
+        
+        form.add(lbl("Stok:", Font.PLAIN, 14));
+        menuStock = new JTextField(6); menuStock.setFont(font(14)); menuStock.setBorder(insetBorder(8, 12)); form.add(menuStock);
+        
+        JButton saveBtn = btnPrimary("Simpan");
+        saveBtn.addActionListener(e -> saveMenu());
+        form.add(saveBtn);
+        
+        JButton cancelBtn = btnDefault("Batal");
+        cancelBtn.addActionListener(e -> clearMenuForm());
+        form.add(cancelBtn);
         bottom.add(form, BorderLayout.CENTER);
 
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         actions.setOpaque(false);
         JButton edBtn = btnDefault("Edit Terpilih");
         edBtn.addActionListener(e -> editSelectedMenu()); actions.add(edBtn);
@@ -251,7 +302,9 @@ class MainFrame extends JFrame {
 
     void refreshMenuTable() {
         menuModel.setRowCount(0);
-        for (MenuItem m : ctrl.searchMenu(menuSearch.getText().trim())) {
+        List<MenuItem> items = new ArrayList<>(ctrl.searchMenu(menuSearch.getText().trim()));
+        items.sort(Comparator.comparingInt(MenuItem::getId));
+        for (MenuItem m : items) {
             menuModel.addRow(new Object[]{m.getId(), m.getName(), m.getCategory(),
                 "Rp " + Controller.formatRupiah(m.getPrice()), m.getStock()});
         }
@@ -317,16 +370,17 @@ class MainFrame extends JFrame {
         editingId = -1;
     }
 
-    // Kasir
     private JPanel buildCashierPanel() {
-        JPanel p = new JPanel(new BorderLayout(8, 8));
-        p.setBorder(BorderFactory.createEmptyBorder(20, 24, 16, 24));
-        p.setBackground(BG);
-        p.add(lbl("Kasir", Font.BOLD, 24), BorderLayout.NORTH);
+        JPanel p = new JPanel(new BorderLayout(20, 20));
+        p.setBorder(BorderFactory.createEmptyBorder(28, 32, 28, 32));
+        p.setBackground(Color.WHITE);
+        p.add(lbl("Kasir", Font.BOLD, 28), BorderLayout.NORTH);
 
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        split.setResizeWeight(0.60);
-        split.setDividerLocation(620);
+        split.setResizeWeight(0.55);
+        split.setDividerLocation(640);
+        split.setDividerSize(8);
+        split.setBorder(null);
         split.setLeftComponent(buildCashierLeft());
         split.setRightComponent(buildCashierRight());
         p.add(split, BorderLayout.CENTER);
@@ -334,26 +388,33 @@ class MainFrame extends JFrame {
     }
 
     private JPanel buildCashierLeft() {
-        JPanel wrap = new JPanel(new BorderLayout(6, 6));
+        JPanel wrap = new JPanel(new BorderLayout(16, 16));
         wrap.setBackground(Color.WHITE);
-        wrap.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+        wrap.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(ABU_GARIS),
+            BorderFactory.createEmptyBorder(16, 18, 16, 18)
+        ));
 
-        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         row.setOpaque(false);
-        row.add(lbl("Cari:", Font.PLAIN, 13));
-        cashSearch = new JTextField(12); cashSearch.setFont(font(13));
+        row.add(lbl("Cari:", Font.BOLD, 14));
+        cashSearch = new JTextField(16); cashSearch.setFont(font(14));
+        cashSearch.setBorder(insetBorder(8, 12));
         cashSearch.addActionListener(e -> refreshMenuGrid()); row.add(cashSearch);
+        
         cashFilter = new JComboBox<>(new String[]{"Semua", "Makanan", "Minuman"});
-        cashFilter.setFont(font(13));
+        cashFilter.setFont(font(14));
         cashFilter.addActionListener(e -> refreshMenuGrid()); row.add(cashFilter);
+        
         JButton srchBtn = btnDefault("Cari");
         srchBtn.addActionListener(e -> refreshMenuGrid()); row.add(srchBtn);
+        
         JButton refBtn = btnDefault("Refresh");
         refBtn.addActionListener(e -> refreshMenuGrid()); row.add(refBtn);
         wrap.add(row, BorderLayout.NORTH);
 
         menuGridPanel = new JPanel();
-        menuGridPanel.setLayout(new GridLayout(0, 2, 10, 10));
+        menuGridPanel.setLayout(new GridLayout(0, 2, 16, 16));
         menuGridPanel.setOpaque(false);
 
         JPanel gridWrapper = new JPanel(new BorderLayout());
@@ -362,7 +423,7 @@ class MainFrame extends JFrame {
 
         JScrollPane scroll = new JScrollPane(gridWrapper);
         scroll.setBorder(null);
-        scroll.getVerticalScrollBar().setUnitIncrement(20);
+        scroll.getVerticalScrollBar().setUnitIncrement(26);
         scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         wrap.add(scroll, BorderLayout.CENTER);
 
@@ -378,48 +439,51 @@ class MainFrame extends JFrame {
         if ("Minuman".equals(f)) items = items.stream().filter(m -> m.getCategory().equals("minuman")).toList();
 
         for (MenuItem item : items) {
-            JPanel card = new JPanel(new BorderLayout(6, 4));
+            JPanel card = new JPanel(new BorderLayout(10, 8));
             card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(SLATE200),
-                BorderFactory.createEmptyBorder(10, 12, 10, 12)));
+                BorderFactory.createLineBorder(ABU_MUDA, 1),
+                BorderFactory.createEmptyBorder(14, 16, 14, 16)));
             card.setBackground(Color.WHITE);
             card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            card.setPreferredSize(new Dimension(200, 80));
-            card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+            card.setPreferredSize(new Dimension(220, 110));
+            card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
 
             boolean isFood = item.getCategory().equals("makanan");
-            JLabel badge = lbl(isFood ? "Makanan" : "Minuman", Font.BOLD, 10);
-            badge.setForeground(isFood ? new Color(0xea580c) : new Color(0x2563eb));
+            JLabel badge = lbl(isFood ? "Makanan" : "Minuman", Font.BOLD, 12);
+            badge.setForeground(isFood ? ORANYE : BIRU);
             card.add(badge, BorderLayout.NORTH);
 
-            JPanel info = new JPanel(new GridLayout(2, 1, 0, 2));
+            JPanel info = new JPanel(new GridLayout(2, 1, 0, 6));
             info.setOpaque(false);
-            info.add(lbl(item.getName(), Font.BOLD, 13));
-            JLabel priceLbl = lbl("Rp " + Controller.formatRupiah(item.getPrice()), Font.BOLD, 15);
-            priceLbl.setForeground(AMBER700);
+            info.add(lbl(item.getName(), Font.BOLD, 15));
+            JLabel priceLbl = lbl("Rp " + Controller.formatRupiah(item.getPrice()), Font.BOLD, 16);
+            priceLbl.setForeground(ORANYE_TUA);
             info.add(priceLbl);
             card.add(info, BorderLayout.CENTER);
 
-            JPanel right = new JPanel(new BorderLayout(0, 4));
+            JPanel right = new JPanel(new BorderLayout(0, 8));
             right.setOpaque(false);
-            JLabel stLbl = lbl("Stok: " + item.getStock(), Font.PLAIN, 11);
-            stLbl.setForeground(item.getStock() <= 5 ? RED500 : new Color(0x94a3b8));
+            JLabel stLbl = lbl("Stok: " + item.getStock(), Font.PLAIN, 13);
+            stLbl.setForeground(item.getStock() <= 5 ? MERAH : ABU_TEKS);
             stLbl.setHorizontalAlignment(SwingConstants.RIGHT);
             right.add(stLbl, BorderLayout.NORTH);
-            JLabel addLbl = lbl("[ + ]", Font.BOLD, 16);
-            addLbl.setForeground(AMBER);
+            JLabel addLbl = lbl("[ + ]", Font.BOLD, 20);
+            addLbl.setForeground(ORANYE);
             addLbl.setHorizontalAlignment(SwingConstants.RIGHT);
             right.add(addLbl, BorderLayout.SOUTH);
             card.add(right, BorderLayout.EAST);
 
             if (item.getStock() > 0) {
                 card.addMouseListener(new MouseAdapter() {
+                    @Override
                     public void mouseClicked(MouseEvent e)  { addToCart(item); }
-                    public void mouseEntered(MouseEvent e)  { card.setBackground(AMBER50); }
+                    @Override
+                    public void mouseEntered(MouseEvent e)  { card.setBackground(LATAR); }
+                    @Override
                     public void mouseExited(MouseEvent e)   { card.setBackground(Color.WHITE); }
                 });
             } else {
-                card.setBackground(SLATE100);
+                card.setBackground(LATAR);
             }
             menuGridPanel.add(card);
         }
@@ -427,49 +491,57 @@ class MainFrame extends JFrame {
         menuGridPanel.repaint();
     }
 
-    // Keranjang
     private JPanel buildCashierRight() {
-        JPanel outer = new JPanel(new BorderLayout(6, 6));
+        JPanel outer = new JPanel(new BorderLayout(12, 12));
         outer.setBackground(Color.WHITE);
-        outer.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+        outer.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(ABU_GARIS),
+            BorderFactory.createEmptyBorder(16, 18, 12, 18)
+        ));
 
-        JPanel hdr = new JPanel(new BorderLayout());
-        hdr.setOpaque(false);
-        hdr.add(lbl("Keranjang", Font.BOLD, 16), BorderLayout.WEST);
-        cartItems = lbl("0 item", Font.PLAIN, 12);
-        cartItems.setForeground(new Color(0x64748b));
-        hdr.add(cartItems, BorderLayout.EAST);
-        outer.add(hdr, BorderLayout.NORTH);
+        JPanel outerHdr = new JPanel(new BorderLayout());
+        outerHdr.setOpaque(false);
+        outerHdr.add(lbl("Keranjang Belanja", Font.BOLD, 18), BorderLayout.WEST);
+        cartItems = lbl("0 Item", Font.PLAIN, 13);
+        cartItems.setForeground(ABU_TEKS);
+        outerHdr.add(cartItems, BorderLayout.EAST);
+        outer.add(outerHdr, BorderLayout.NORTH);
 
         cartListPanel = new JPanel();
         cartListPanel.setLayout(new BoxLayout(cartListPanel, BoxLayout.Y_AXIS));
         cartListPanel.setOpaque(false);
-        cartScroll = new JScrollPane(cartListPanel);
-        cartScroll.setBorder(null);
-        cartScroll.setPreferredSize(new Dimension(0, 220));
-        outer.add(cartScroll, BorderLayout.CENTER);
 
-        JButton clrBtn = btnDanger("Kosongkan Keranjang");
-        clrBtn.addActionListener(e -> { cart.clear(); refreshCart(); });
-        JPanel clrPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        clrPanel.setOpaque(false);
-        clrPanel.add(clrBtn);
-        outer.add(clrPanel, BorderLayout.SOUTH);
+        JPanel scrollContentWrapper = new JPanel(new BorderLayout());
+        scrollContentWrapper.setOpaque(false);
+        scrollContentWrapper.add(cartListPanel, BorderLayout.NORTH);
+        
+        cartScroll = new JScrollPane(scrollContentWrapper);
+        cartScroll.setBorder(BorderFactory.createLineBorder(ABU_MUDA));
+        cartScroll.getVerticalScrollBar().setUnitIncrement(14);
+        outer.add(cartScroll, BorderLayout.CENTER);
 
         JPanel bottom = new JPanel(new GridBagLayout());
         bottom.setOpaque(false);
-        bottom.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, SLATE200));
-        bottom.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        bottom.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(1, 0, 0, 0, ABU_GARIS),
+            BorderFactory.createEmptyBorder(12, 0, 0, 0)
+        ));
         GridBagConstraints g = new GridBagConstraints();
         g.fill = GridBagConstraints.HORIZONTAL;
         g.insets = new Insets(4, 0, 4, 0);
 
-        g.gridx = 0; g.gridy = 0; bottom.add(lbl("Total:", Font.PLAIN, 13), g);
-        g.gridx = 1; cartTotal = lbl("Rp 0", Font.BOLD, 22);
-        cartTotal.setForeground(AMBER700); bottom.add(cartTotal, g);
+        g.gridx = 0; g.gridy = 0; g.weightx = 0.0;
+        bottom.add(lbl("Total Nominal:", Font.PLAIN, 13), g);
+        g.gridx = 1; g.weightx = 1.0;
+        cartTotal = lbl("Rp 0", Font.BOLD, 22);
+        cartTotal.setForeground(ORANYE_TUA);
+        cartTotal.setHorizontalAlignment(SwingConstants.RIGHT);
+        bottom.add(cartTotal, g);
 
-        g.gridx = 0; g.gridy = 1; bottom.add(lbl("Metode:", Font.PLAIN, 13), g);
-        g.gridx = 1; cashMethod = new JComboBox<>(new String[]{"Cash", "QRIS", "Debit"});
+        g.gridx = 0; g.gridy = 1; g.weightx = 0.0;
+        bottom.add(lbl("Metode Bayar:", Font.PLAIN, 13), g);
+        g.gridx = 1; g.weightx = 1.0;
+        cashMethod = new JComboBox<>(new String[]{"Cash", "QRIS", "Debit"});
         cashMethod.setFont(font(13));
         cashMethod.addActionListener(e -> {
             boolean isCash = "Cash".equals(cashMethod.getSelectedItem());
@@ -478,34 +550,50 @@ class MainFrame extends JFrame {
         });
         bottom.add(cashMethod, g);
 
-        g.gridx = 0; g.gridy = 2; bottom.add(lbl("Bayar:", Font.PLAIN, 13), g);
-        g.gridx = 1;
-        JPanel payRow = new JPanel(new BorderLayout(4, 0)); payRow.setOpaque(false);
-        cashPay = new JTextField(10); cashPay.setFont(font(13));
+        g.gridx = 0; g.gridy = 2; g.weightx = 0.0;
+        bottom.add(lbl("Bayar (Cash):", Font.PLAIN, 13), g);
+        g.gridx = 1; g.weightx = 1.0;
+        JPanel payRow = new JPanel(new BorderLayout(8, 0));
+        payRow.setOpaque(false);
+        cashPay = new JTextField(10);
+        cashPay.setFont(font(13));
+        cashPay.setBorder(insetBorder(5, 10));
         payRow.add(cashPay, BorderLayout.CENTER);
-        cartChange = lbl("", Font.BOLD, 12);
-        cartChange.setForeground(new Color(0x16a34a));
+        cartChange = lbl("", Font.BOLD, 13);
+        cartChange.setForeground(HIJAU);
         payRow.add(cartChange, BorderLayout.EAST);
         bottom.add(payRow, g);
 
-        g.gridx = 0; g.gridy = 3; g.gridwidth = 2;
-        JButton chkBtn = btnPrimary("Bayar Sekarang");
+        JPanel btnPanel = new JPanel(new GridLayout(1, 2, 8, 0));
+        btnPanel.setOpaque(false);
+        
+        JButton clrBtn = btnDanger("Kosongkan");
+        clrBtn.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        clrBtn.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
+        clrBtn.addActionListener(e -> { cart.clear(); refreshCart(); });
+        btnPanel.add(clrBtn);
+
+        JButton chkBtn = btnPrimary("Proses Bayar");
         chkBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        chkBtn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        chkBtn.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
         chkBtn.addActionListener(e -> checkout());
-        bottom.add(chkBtn, g);
+        btnPanel.add(chkBtn);
+
+        g.gridx = 0; g.gridy = 3; g.gridwidth = 2; g.weightx = 1.0;
+        g.insets = new Insets(10, 0, 2, 0);
+        bottom.add(btnPanel, g);
 
         cashPay.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
             public void changedUpdate(javax.swing.event.DocumentEvent e) { updateChange(); }
+            @Override
             public void removeUpdate(javax.swing.event.DocumentEvent e)  { updateChange(); }
+            @Override
             public void insertUpdate(javax.swing.event.DocumentEvent e)  { updateChange(); }
         });
 
-        JPanel wrap = new JPanel(new BorderLayout());
-        wrap.setOpaque(false);
-        wrap.add(outer, BorderLayout.CENTER);
-        wrap.add(bottom, BorderLayout.SOUTH);
-        return wrap;
+        outer.add(bottom, BorderLayout.SOUTH);
+        return outer;
     }
 
     private void addToCart(MenuItem item) {
@@ -549,59 +637,84 @@ class MainFrame extends JFrame {
             double sub = ce.item.getPrice() * ce.qty;
             total += sub; tq += ce.qty;
 
-            JPanel row = new JPanel(new BorderLayout(8, 0));
+            JPanel row = new JPanel(new GridBagLayout());
             row.setOpaque(true);
             row.setBackground(Color.WHITE);
             row.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, SLATE200),
-                BorderFactory.createEmptyBorder(6, 8, 6, 8)));
-            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+                BorderFactory.createMatteBorder(0, 0, 1, 0, ABU_MUDA),
+                BorderFactory.createEmptyBorder(10, 14, 10, 14)));
 
-            JLabel nameLbl = lbl(ce.item.getName(), Font.PLAIN, 12);
-            nameLbl.setPreferredSize(new Dimension(100, 20));
-            row.add(nameLbl, BorderLayout.WEST);
+            GridBagConstraints c = new GridBagConstraints();
+            c.fill = GridBagConstraints.HORIZONTAL;
 
-            JPanel ctrl = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 0));
-            ctrl.setOpaque(false);
+            c.gridx = 0; c.gridy = 0; c.weightx = 1.0; c.gridwidth = 1;
+            JLabel nameLbl = lbl(ce.item.getName(), Font.BOLD, 14);
+            nameLbl.setForeground(ABU_TEKS);
+            row.add(nameLbl, c);
+
+            c.gridx = 1; c.gridy = 0; c.weightx = 0.0;
+            JPanel ctrlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
+            ctrlPanel.setOpaque(false);
 
             JButton minus = new JButton("-");
-            minus.setFont(new Font("Segoe UI", Font.BOLD, 10));
-            minus.setPreferredSize(new Dimension(32, 24));
+            minus.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            minus.setPreferredSize(new Dimension(28, 24));
             minus.setMargin(new Insets(0, 0, 0, 0));
             minus.setFocusPainted(false);
             minus.addActionListener(e -> cartMinus(ce));
-            ctrl.add(minus);
+            ctrlPanel.add(minus);
 
-            JLabel qtyLbl = lbl(String.valueOf(ce.qty), Font.BOLD, 13);
-            qtyLbl.setPreferredSize(new Dimension(24, 20));
-            qtyLbl.setHorizontalAlignment(SwingConstants.CENTER);
-            ctrl.add(qtyLbl);
+            JTextField qtyField = new JTextField(String.valueOf(ce.qty), 3);
+            qtyField.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            qtyField.setHorizontalAlignment(JTextField.CENTER);
+            qtyField.setPreferredSize(new Dimension(34, 24));
+            qtyField.addActionListener(e -> {
+                try {
+                    int val = Integer.parseInt(qtyField.getText().trim());
+                    if (val <= 0) {
+                        cart.remove(ce);
+                    } else if (val > ce.item.getStock()) {
+                        JOptionPane.showMessageDialog(this, "Stok tidak cukup! Maksimal: " + ce.item.getStock());
+                        qtyField.setText(String.valueOf(ce.qty));
+                    } else {
+                        ce.qty = val;
+                    }
+                    refreshCart();
+                } catch (NumberFormatException ex) {
+                    qtyField.setText(String.valueOf(ce.qty));
+                }
+            });
+            ctrlPanel.add(qtyField);
 
             JButton plus = new JButton("+");
-            plus.setFont(new Font("Segoe UI", Font.BOLD, 10));
-            plus.setPreferredSize(new Dimension(32, 24));
+            plus.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            plus.setPreferredSize(new Dimension(28, 24));
             plus.setMargin(new Insets(0, 0, 0, 0));
             plus.setFocusPainted(false);
             plus.addActionListener(e -> cartPlus(ce));
-            ctrl.add(plus);
-            row.add(ctrl, BorderLayout.CENTER);
-            JLabel subLbl = lbl("Rp " + Controller.formatRupiah(sub), Font.BOLD, 12);
-            subLbl.setForeground(AMBER700);
-            row.add(subLbl, BorderLayout.EAST);
+            ctrlPanel.add(plus);
+            row.add(ctrlPanel, c);
+
+            c.gridx = 0; c.gridy = 1; c.weightx = 1.0; c.gridwidth = 2;
+            c.insets = new Insets(6, 0, 0, 0);
+            JLabel subLbl = lbl("Rp " + Controller.formatRupiah(sub), Font.BOLD, 13);
+            subLbl.setForeground(ORANYE);
+            row.add(subLbl, c);
 
             cartListPanel.add(row);
         }
 
         if (cart.isEmpty()) {
             JLabel emptyLbl = lbl("(keranjang kosong)", Font.ITALIC, 13);
-            emptyLbl.setForeground(new Color(0x94a3b8));
+            emptyLbl.setForeground(ABU_TEKS);
             emptyLbl.setHorizontalAlignment(SwingConstants.CENTER);
             emptyLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+            cartListPanel.add(Box.createVerticalStrut(32));
             cartListPanel.add(emptyLbl);
         }
 
         cartTotal.setText("Rp " + Controller.formatRupiah(total));
-        cartItems.setText(tq + " item");
+        cartItems.setText(tq + " Item");
         cartListPanel.revalidate();
         cartListPanel.repaint();
         updateChange();
@@ -628,7 +741,7 @@ class MainFrame extends JFrame {
     private void checkout() {
         if (cart.isEmpty()) { JOptionPane.showMessageDialog(this, "Keranjang kosong!"); return; }
         String methodName = (String) cashMethod.getSelectedItem();
-        String method = methodName.toLowerCase(); // cash/qris/debit
+        String method = methodName.toLowerCase();
         double total = cart.stream().mapToDouble(ce -> ce.item.getPrice() * ce.qty).sum();
         double payAmount = total;
 
@@ -670,7 +783,7 @@ class MainFrame extends JFrame {
         ta.setEditable(false);
         ta.setBackground(Color.WHITE);
         JScrollPane sc = new JScrollPane(ta);
-        sc.setPreferredSize(new Dimension(390, 400));
+        sc.setPreferredSize(new Dimension(390, 420));
         JOptionPane.showMessageDialog(this, sc, "Struk Pembayaran", JOptionPane.INFORMATION_MESSAGE);
 
         cart.clear(); refreshCart();
@@ -678,21 +791,20 @@ class MainFrame extends JFrame {
         refreshMenuGrid();
     }
 
-    // Laporan
     private JPanel buildReportPanel() {
-        JPanel p = new JPanel(new BorderLayout(10, 10));
-        p.setBorder(BorderFactory.createEmptyBorder(20, 24, 16, 24));
-        p.setBackground(BG);
+        JPanel p = new JPanel(new BorderLayout(16, 16));
+        p.setBorder(BorderFactory.createEmptyBorder(28, 32, 28, 32));
+        p.setBackground(Color.WHITE);
 
         JPanel hdr = new JPanel(new BorderLayout());
         hdr.setOpaque(false);
-        hdr.add(lbl("Laporan Harian", Font.BOLD, 24), BorderLayout.WEST);
+        hdr.add(lbl("Laporan Harian", Font.BOLD, 28), BorderLayout.WEST);
 
-        JPanel dp = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        JPanel dp = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         dp.setOpaque(false);
-        dp.add(lbl("Tanggal:", Font.PLAIN, 13));
+        dp.add(lbl("Tanggal:", Font.BOLD, 14));
         rptDate = new JComboBox<>();
-        rptDate.setFont(font(13));
+        rptDate.setFont(font(14));
         rptDate.addActionListener(e -> refreshReport());
         dp.add(rptDate);
         JButton refBtn = btnDefault("Refresh");
@@ -701,29 +813,37 @@ class MainFrame extends JFrame {
         hdr.add(dp, BorderLayout.EAST);
         p.add(hdr, BorderLayout.NORTH);
 
-        JPanel stats = new JPanel(new GridLayout(1, 3, 12, 0));
+        JPanel mainContent = new JPanel(new BorderLayout(0, 20));
+        mainContent.setOpaque(false);
+
+        JPanel stats = new JPanel(new GridLayout(1, 3, 20, 0));
         stats.setOpaque(false);
-        rptTrans = addStat(stats, "Total Transaksi",       BLUE50,  new Color(0x0369a1));
-        rptRev   = addStat(stats, "Total Pendapatan",      AMBER50, AMBER700);
-        rptAvg   = addStat(stats, "Rata-rata / Transaksi", GREEN50, GREEN700);
-        p.add(stats, BorderLayout.CENTER);
+        rptTrans = addStat(stats, "Total Transaksi",       BIRU);
+        rptRev   = addStat(stats, "Total Pendapatan",      ORANYE_TUA);
+        rptAvg   = addStat(stats, "Rata-rata / Transaksi", HIJAU);
+        mainContent.add(stats, BorderLayout.NORTH);
 
         rptModel = new DefaultTableModel(
             new String[]{"Order ID", "Waktu", "Item (Qty)", "Total", "Metode"}, 0) {
+            @Override
             public boolean isCellEditable(int r, int c) { return false; }
         };
         rptTable = new JTable(rptModel);
-        rptTable.setRowHeight(34);
-        rptTable.setFont(font(13));
-        rptTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-        rptTable.getTableHeader().setBackground(SLATE100);
-        rptTable.setSelectionBackground(SEL_BG);
+        rptTable.setRowHeight(42);
+        rptTable.setFont(font(14));
+        rptTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        rptTable.getTableHeader().setBackground(LATAR);
+        rptTable.getTableHeader().setForeground(ABU_TEKS);
+        rptTable.getTableHeader().setPreferredSize(new Dimension(0, 44));
+        rptTable.setSelectionBackground(KUNING);
         rptTable.setSelectionForeground(Color.BLACK);
-        rptTable.setGridColor(SLATE200);
+        rptTable.setGridColor(ABU_MUDA);
+        
         JScrollPane sp = new JScrollPane(rptTable);
-        sp.setPreferredSize(new Dimension(0, 260));
-        sp.setBorder(BorderFactory.createLineBorder(SLATE200));
-        p.add(sp, BorderLayout.SOUTH);
+        sp.setBorder(BorderFactory.createLineBorder(ABU_GARIS));
+        mainContent.add(sp, BorderLayout.CENTER);
+        
+        p.add(mainContent, BorderLayout.CENTER);
 
         refreshReport();
         return p;
@@ -780,43 +900,43 @@ class MainFrame extends JFrame {
 
     private javax.swing.border.Border insetBorder(int top, int horiz) {
         return BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(0xcbd5e1)),
+            BorderFactory.createLineBorder(ABU_GARIS),
             BorderFactory.createEmptyBorder(top, horiz, top, horiz));
     }
 
     private JButton btnPrimary(String text) {
         JButton b = new JButton(text);
-        b.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        b.setBackground(AMBER);
+        b.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        b.setBackground(ORANYE);
         b.setForeground(Color.WHITE);
         b.setBorderPainted(false);
         b.setFocusPainted(false);
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        b.setBorder(BorderFactory.createEmptyBorder(7, 14, 7, 14));
+        b.setBorder(BorderFactory.createEmptyBorder(12, 18, 12, 18));
         return b;
     }
 
     private JButton btnDefault(String text) {
         JButton b = new JButton(text);
-        b.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        b.setBackground(SLATE100);
-        b.setForeground(SLATE600);
+        b.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        b.setBackground(LATAR);
+        b.setForeground(ABU_TEKS);
         b.setBorderPainted(false);
         b.setFocusPainted(false);
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        b.setBorder(BorderFactory.createEmptyBorder(7, 14, 7, 14));
+        b.setBorder(BorderFactory.createEmptyBorder(12, 18, 12, 18));
         return b;
     }
 
     private JButton btnDanger(String text) {
         JButton b = new JButton(text);
-        b.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        b.setBackground(RED50);
-        b.setForeground(new Color(0xdc2626));
+        b.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        b.setBackground(LATAR);
+        b.setForeground(MERAH);
         b.setBorderPainted(false);
         b.setFocusPainted(false);
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        b.setBorder(BorderFactory.createEmptyBorder(7, 14, 7, 14));
+        b.setBorder(BorderFactory.createEmptyBorder(12, 18, 12, 18));
         return b;
     }
 }
